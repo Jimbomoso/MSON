@@ -19,12 +19,35 @@ app.use('/messages', routes.message);
 app.use((req, res, next) => {
     req.context = {
         models,
-        me: models.users[1],
+        me: await models.User.findByLogin('admin'),
     };
     next();
 });
 
+const eraseDatabaseOnSync = true;
+
 connectDb().then(async () => {
+    if (eraseDatabaseOnSync) {
+        await Promise.all([
+            models.User.deleteMany({}),
+            models.Message.deleteMany({}),
+        ]);
+    
+    const createUsersWithMessages =async () => {
+        const user1 = new models.User({
+            username: 'admin',
+        });
+        const message1 = new models.Message({
+            text: 'This is just at test',
+            user: user1.id,
+        });
+
+        await message1.save();
+
+        await user1.save();
+    };
+    
+}
     app.listen(process.env.PORT, () => 
         console.log(`App listening on port ${process.env.PORT}!`),
     );
